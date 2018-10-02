@@ -5,10 +5,13 @@ var ejs = require('ejs');
 var engine = require('ejs-mate');
 var session = require('express-session');
 var mongoose = require('mongoose');
-var MongoStore = require('connect-mongo')('session');
+var MongoStore = require('connect-mongo')(session);
+var passport = require('passport');
+var flash = require('connect-flash');
 
 var app = express();
 mongoose.connect('mongodb://localhost/nandi');
+require('./config/passport');
 app.use(express.static('public'));
 app.engine('ejs', engine);
 app.set('view engine','ejs');
@@ -20,12 +23,14 @@ app.use(session({
     secret: 'Thisismytestkey',
     resave: false,
     saveUninitilized: false,
-    store: new MongoStore({mongooseConnection: mongoose.connection});
+    store: new MongoStore({mongooseConnection:mongoose.connection})
 }));
+app.use(flash());
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.get('/', function(req, res, next){
-    res.render('index');
-});
+
+require('./routes/user')(app,passport);
 app.listen(3000, function(){
     console.log('app running onport 3000');
 
